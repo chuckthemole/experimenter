@@ -72,7 +72,7 @@ const PageEditAudience: React.FunctionComponent<RouteComponentProps> = () => {
           refetchReview.current!();
 
           if (next) {
-            navigate("../request-review");
+            navigate("../");
           }
         }
       } catch (error) {

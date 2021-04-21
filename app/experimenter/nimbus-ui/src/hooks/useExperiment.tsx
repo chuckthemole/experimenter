@@ -4,6 +4,7 @@
 
 import { useQuery } from "@apollo/client";
 import { GET_EXPERIMENT_QUERY } from "../gql/experiments";
+import { ReviewReadiness } from "../lib/types";
 import { getExperiment } from "../types/getExperiment";
 
 const fieldPageMap: { [page: string]: string[] } = {
@@ -73,7 +74,7 @@ export function useExperiment(slug: string) {
       missingFields,
       isMissingField,
       refetch: refetch as () => void,
-    },
+    } as ReviewReadiness,
   };
 }
 

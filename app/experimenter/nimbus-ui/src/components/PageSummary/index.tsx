@@ -19,9 +19,7 @@ const PageSummary: React.FunctionComponent<PageRequestReviewProps> = ({
     {...{ polling }}
     analysisRequiredInSidebar
   >
-    {({ experiment, review: { refetch } }) => (
-      <Summary {...{ experiment, refetch }} />
-    )}
+    {({ experiment, review }) => <Summary {...{ experiment, review }} />}
   </AppLayoutWithExperiment>
 );
 

@@ -2,20 +2,30 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import React, { useRef } from "react";
+import { Link } from "@reach/router";
+import React, { useRef, useState } from "react";
 import Alert from "react-bootstrap/Alert";
 import Badge from "react-bootstrap/Badge";
 import { useChangeOperationMutation, useConfig } from "../../hooks";
 import { ReactComponent as ExternalIcon } from "../../images/external.svg";
+import { BASE_PATH } from "../../lib/constants";
 import { getStatus } from "../../lib/experiment";
 import { ConfigOptions, getConfigLabel } from "../../lib/getConfigLabel";
+import { ReviewReadiness } from "../../lib/types";
 import { getExperiment_experimentBySlug } from "../../types/getExperiment";
-import { NimbusExperimentPublishStatus } from "../../types/globalTypes";
+import {
+  NimbusExperimentPublishStatus,
+  NimbusExperimentStatus,
+} from "../../types/globalTypes";
+import { editPages } from "../AppLayoutWithSidebar";
 import ChangeApprovalOperations from "../ChangeApprovalOperations";
 import LinkExternal from "../LinkExternal";
 import LinkMonitoring from "../LinkMonitoring";
 import NotSet from "../NotSet";
 import EndExperiment from "./EndExperiment";
+import FormLaunchDraftToPreview from "./FormLaunchDraftToPreview";
+import FormLaunchDraftToReview from "./FormLaunchDraftToReview";
+import FormLaunchPreviewToReview from "./FormLaunchPreviewToReview";
 import SummaryTimeline from "./SummaryTimeline";
 import TableAudience from "./TableAudience";
 import TableBranches from "./TableBranches";
@@ -23,10 +33,13 @@ import TableSummary from "./TableSummary";
 
 type SummaryProps = {
   experiment: getExperiment_experimentBySlug;
-  refetch?: () => void;
+  review: ReviewReadiness;
 } & Partial<React.ComponentProps<typeof ChangeApprovalOperations>>; // TODO EXP-1143: temporary page-level props, should be replaced by API data for experiment & current user
 
-const Summary = ({ experiment, refetch }: SummaryProps) => {
+const Summary = ({
+  experiment,
+  review: { refetch, invalidPages },
+}: SummaryProps) => {
   const { kintoAdminUrl } = useConfig();
   const status = getStatus(experiment);
   const branchCount = [
@@ -40,6 +53,7 @@ const Summary = ({ experiment, refetch }: SummaryProps) => {
   // neither of these components need to use refs.
   const currentExperiment = useRef<getExperiment_experimentBySlug>(experiment);
   const refetchReview = useRef<(() => void) | undefined>(refetch);
+  const [showLaunchToReview, setShowLaunchToReview] = useState(false);
 
   const {
     publishStatus,
@@ -57,13 +71,32 @@ const Summary = ({ experiment, refetch }: SummaryProps) => {
     isLoading,
     submitError,
     callbacks: [
+      onLaunchToPreviewClicked,
+      onBackToDraftClicked,
+      onLaunchClicked,
+      onLaunchApprovedClicked,
+      onLaunchRejectedClicked,
       onConfirmEndClicked,
-      onReviewApprovedClicked,
-      onReviewRejectedClicked,
+      onEndApprovedClicked,
+      onEndRejectedClicked,
     ],
   } = useChangeOperationMutation(
     currentExperiment,
     refetchReview,
+    { status: NimbusExperimentStatus.PREVIEW },
+    { status: NimbusExperimentStatus.DRAFT },
+    {
+      status: NimbusExperimentStatus.DRAFT,
+      publishStatus: NimbusExperimentPublishStatus.REVIEW,
+    },
+    {
+      status: NimbusExperimentStatus.DRAFT,
+      publishStatus: NimbusExperimentPublishStatus.APPROVED,
+    },
+    {
+      status: NimbusExperimentStatus.DRAFT,
+      publishStatus: NimbusExperimentPublishStatus.IDLE,
+    },
     {
       publishStatus: NimbusExperimentPublishStatus.REVIEW,
     },
@@ -91,6 +124,77 @@ const Summary = ({ experiment, refetch }: SummaryProps) => {
         </Alert>
       )}
 
+      {(status.draft || status.preview) && (
+        <>
+          {(invalidPages || []).length > 0 ? (
+            <Alert variant="warning">
+              This experiment is missing details and cannot be launched. Please
+              complete the required fields in{" "}
+              {invalidPages.map((missingPage, idx) => {
+                const editPage = editPages.find((p) => p.slug === missingPage)!;
+
+                return (
+                  <React.Fragment key={`missing-${idx}`}>
+                    <Link
+                      to={`${BASE_PATH}/${experiment.slug}/edit/${editPage.slug}?show-errors`}
+                    >
+                      {editPage.name}
+                    </Link>
+
+                    {idx !== invalidPages.length - 1 && ", "}
+                  </React.Fragment>
+                );
+              })}
+            </Alert>
+          ) : (
+            <ChangeApprovalOperations
+              {...{
+                actionDescription: "launch",
+                isLoading,
+                publishStatus,
+                canReview: !!canReview,
+                reviewRequestEvent,
+                rejectionEvent,
+                timeoutEvent,
+                rejectChange: onLaunchRejectedClicked,
+                approveChange: onLaunchApprovedClicked,
+                startRemoteSettingsApproval,
+              }}
+            >
+              {status.draft &&
+                (showLaunchToReview ? (
+                  <FormLaunchDraftToReview
+                    {...{
+                      isLoading,
+                      onSubmit: onLaunchClicked,
+                      onCancel: () => setShowLaunchToReview(false),
+                      onLaunchToPreview: onLaunchToPreviewClicked,
+                    }}
+                  />
+                ) : (
+                  <FormLaunchDraftToPreview
+                    {...{
+                      isLoading,
+                      onSubmit: onLaunchToPreviewClicked,
+                      onLaunchWithoutPreview: () => setShowLaunchToReview(true),
+                    }}
+                  />
+                ))}
+
+              {status.preview && status.idle && (
+                <FormLaunchPreviewToReview
+                  {...{
+                    isLoading,
+                    onSubmit: onLaunchClicked,
+                    onBackToDraft: onBackToDraftClicked,
+                  }}
+                />
+              )}
+            </ChangeApprovalOperations>
+          )}
+        </>
+      )}
+
       {status.live && (
         <ChangeApprovalOperations
           {...{
@@ -101,8 +205,8 @@ const Summary = ({ experiment, refetch }: SummaryProps) => {
             reviewRequestEvent,
             rejectionEvent,
             timeoutEvent,
-            rejectChange: onReviewRejectedClicked,
-            approveChange: onReviewApprovedClicked,
+            rejectChange: onEndRejectedClicked,
+            approveChange: onEndApprovedClicked,
             startRemoteSettingsApproval,
           }}
         >

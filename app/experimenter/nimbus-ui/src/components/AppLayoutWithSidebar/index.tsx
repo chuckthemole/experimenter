@@ -10,10 +10,9 @@ import Nav from "react-bootstrap/Nav";
 import Row from "react-bootstrap/Row";
 import { ReactComponent as Airplane } from "../../images/airplane.svg";
 import { ReactComponent as ChevronLeft } from "../../images/chevron-left.svg";
-import { ReactComponent as Clipboard } from "../../images/clipboard.svg";
+import { ReactComponent as NotAllowed } from "../../images/not-allowed.svg";
 import { BASE_PATH } from "../../lib/constants";
 import { StatusCheck } from "../../lib/experiment";
-import { DisabledItem } from "../DisabledItem";
 import { LinkNav } from "../LinkNav";
 import { ReactComponent as AlertCircle } from "./alert-circle.svg";
 import { ReactComponent as ChartArrow } from "./chart-arrow.svg";
@@ -32,7 +31,7 @@ type AppLayoutWithSidebarProps = {
   };
 } & RouteComponentProps;
 
-const editPages = [
+export const editPages = [
   {
     name: "Overview",
     slug: "overview",
@@ -93,6 +92,34 @@ export const AppLayoutWithSidebar = ({
                 Summary
               </LinkNav>
 
+              {(review?.invalidPages || []).length > 0 && !reviewOrPreview && (
+                <div className="mx-1 my-2 d-flex text-muted font-weight-normal">
+                  <NotAllowed className="mt-1 sidebar-icon" />
+                  <p className="my-0 small">
+                    This experiment is missing details in{" "}
+                    {review!.invalidPages.map((missingPage, idx) => {
+                      const editPage = editPages.find(
+                        (p) => p.slug === missingPage,
+                      )!;
+
+                      return (
+                        <React.Fragment key={`missing-${idx}`}>
+                          <Link
+                            data-sb-kind={`pages/Edit${editPage.name}`}
+                            data-testid={`missing-detail-link-${editPage.slug}`}
+                            to={`${BASE_PATH}/${slug}/edit/${editPage.slug}?show-errors`}
+                          >
+                            {editPage.name}
+                          </Link>
+
+                          {idx !== review!.invalidPages.length - 1 && ", "}
+                        </React.Fragment>
+                      );
+                    })}
+                  </p>
+                </div>
+              )}
+
               <p className="edit-divider position-relative small mb-2 mt-3">
                 <span className="position-relative bg-light pl-1 pr-2 text-muted">
                   Edit Experiment
@@ -124,42 +151,6 @@ export const AppLayoutWithSidebar = ({
                   )}
                 </LinkNav>
               ))}
-              {!review || review.ready || reviewOrPreview ? (
-                <LinkNav
-                  route={`${slug}/request-review`}
-                  storiesOf="pages/RequestReview"
-                  testid="nav-request-review"
-                >
-                  <Clipboard className="sidebar-icon" />
-                  Review &amp; Launch
-                </LinkNav>
-              ) : (
-                <DisabledItem
-                  name="Review &amp; Launch"
-                  testId="missing-details"
-                >
-                  Missing details in:{" "}
-                  {review.invalidPages.map((missingPage, idx) => {
-                    const editPage = editPages.find(
-                      (p) => p.slug === missingPage,
-                    )!;
-
-                    return (
-                      <React.Fragment key={`missing-${idx}`}>
-                        <Link
-                          data-sb-kind={`pages/Edit${editPage.name}`}
-                          data-testid={`missing-detail-link-${editPage.slug}`}
-                          to={`${BASE_PATH}/${slug}/edit/${editPage.slug}?show-errors`}
-                        >
-                          {editPage.name}
-                        </Link>
-
-                        {idx !== review.invalidPages.length - 1 && ", "}
-                      </React.Fragment>
-                    );
-                  })}
-                </DisabledItem>
-              )}
             </Nav>
           </nav>
         </Col>
