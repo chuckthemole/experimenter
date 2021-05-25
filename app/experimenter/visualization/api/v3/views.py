@@ -13,6 +13,7 @@ from experimenter.visualization.api.v3.models import (
     Metric,
     Statistic,
     create_results_object_model,
+    METRIC_GROUP
 )
 
 BRANCH_DATA = "branch_data"
@@ -69,7 +70,10 @@ def get_other_metrics_names_and_map(data, RESULTS_METRICS_MAP):
 
         if statistic in priority_stats:
             metric_title = " ".join([word.title() for word in metric.split("_")])
-            other_metrics_names[metric] = metric_title
+            group_name = METRIC_GROUP.get(metric, "other")
+            if group_name not in other_metrics_names:
+                other_metrics_names[group_name] = {}
+            other_metrics_names[group_name][metric] = metric_title
 
             if metric not in other_metrics_map or priority_stats.index(
                 statistic
