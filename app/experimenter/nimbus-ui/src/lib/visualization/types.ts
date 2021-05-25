@@ -2,13 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+import { groupCSS } from "react-select/src/components/Group";
+
 export interface AnalysisData {
   daily: AnalysisPoint[] | null;
   weekly: { [branch: string]: BranchDescription } | null;
   overall: { [branch: string]: BranchDescription } | null;
   show_analysis: boolean;
   metadata?: Metadata;
-  other_metrics?: { [metric: string]: string };
+  other_metrics?: { [group: string]: { [metric: string]: string } };
 }
 
 export type AnalysisDataOverall = Exclude<AnalysisData["overall"], null>;

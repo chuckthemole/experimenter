@@ -47,7 +47,7 @@ const TableMetricPrimary = ({
 }: TableMetricPrimaryProps) => {
   const primaryMetricStatistics = getStatistics(outcome.slug!);
   const metricKey = `${outcome.slug}_ever_used`;
-  const bounds = getExtremeBounds(sortedBranches, results, outcome.slug!);
+  const bounds = getExtremeBounds(sortedBranches, results, outcome.slug!, "");
 
   return (
     <div data-testid="table-metric-primary" className="mb-5">
@@ -81,6 +81,7 @@ const TableMetricPrimary = ({
                     <TableVisualizationRow
                       key={`${displayType}-${value}`}
                       results={results[branch]}
+                      group="other"
                       tableLabel={TABLE_LABEL.PRIMARY_METRICS}
                       {...{ metricKey, displayType, branchComparison, bounds }}
                     />

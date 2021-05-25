@@ -27,12 +27,14 @@ type TableMetricSecondaryProps = {
   results: AnalysisData;
   outcomeSlug: string;
   outcomeDefaultName: string;
+  group: string;
   isDefault?: boolean;
   sortedBranches: string[];
 };
 
 const getStatistics = (slug: string): Array<SecondaryMetricStatistic> => {
   // Make a copy of `SECONDARY_METRIC_COLUMNS` since we modify it.
+  console.log(slug);
   const secondaryMetricStatisticsList = SECONDARY_METRIC_COLUMNS.map(
     (statistic: SecondaryMetricStatistic) => {
       statistic["value"] = slug;
@@ -53,6 +55,7 @@ const TableMetricSecondary = ({
   },
   outcomeSlug,
   outcomeDefaultName,
+  group,
   isDefault = true,
   sortedBranches,
 }: TableMetricSecondaryProps) => {
@@ -62,7 +65,7 @@ const TableMetricSecondary = ({
     : METRIC_TYPE.USER_SELECTED_SECONDARY;
 
   const overallResults = results?.overall!;
-  const bounds = getExtremeBounds(sortedBranches, overallResults, outcomeSlug);
+  const bounds = getExtremeBounds(sortedBranches, overallResults, outcomeSlug, group);
   const outcomeName =
     results.metadata?.metrics[outcomeSlug]?.friendly_name || outcomeDefaultName;
   const outcomeDescription =
@@ -113,26 +116,30 @@ const TableMetricSecondary = ({
           </tr>
         </thead>
         <tbody>
-          {sortedBranches.map((branch) => {
-            return (
-              <tr key={branch}>
-                <th className="align-middle" scope="row">
-                  {branch}
-                </th>
-                {secondaryMetricStatistics.map(
-                  ({ displayType, branchComparison, value }) => (
-                    <TableVisualizationRow
-                      key={`${displayType}-${value}`}
-                      results={overallResults[branch]}
-                      tableLabel={TABLE_LABEL.SECONDARY_METRICS}
-                      metricKey={outcomeSlug}
-                      {...{ displayType, branchComparison, bounds }}
-                    />
-                  ),
-                )}
-              </tr>
-            );
-          })}
+          {group &&
+            sortedBranches.map((branch) => {
+              return (
+                overallResults[branch].branch_data[group] && (
+                  <tr key={`${branch}-${group}`}>
+                    <th className="align-middle" scope="row">
+                      {branch}
+                    </th>
+                    {secondaryMetricStatistics.map(
+                      ({ displayType, branchComparison, value }) => (
+                        <TableVisualizationRow
+                          key={`${displayType}-${value}`}
+                          results={overallResults[branch]}
+                          group={group}
+                          tableLabel={TABLE_LABEL.SECONDARY_METRICS}
+                          metricKey={outcomeSlug}
+                          {...{ displayType, branchComparison, bounds }}
+                        />
+                      ),
+                    )}
+                  </tr>
+                )
+              );
+            })}
         </tbody>
       </table>
       {results?.weekly && (

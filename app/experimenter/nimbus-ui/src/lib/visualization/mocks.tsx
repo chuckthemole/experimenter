@@ -350,7 +350,7 @@ export const weeklyMockAnalysis = (modifications = {}) =>
 export const mockAnalysis = (modifications = {}) =>
   Object.assign(
     {
-      other_metrics: { feature_d: "Feature D" },
+      other_metrics: { "other": { feature_d: "Feature D" } },
       metadata: MOCK_METADATA,
       show_analysis: true,
       daily: [],
@@ -984,7 +984,7 @@ export const mockAnalysis = (modifications = {}) =>
 export const mockIncompleteAnalysis = (modifications = {}) =>
   Object.assign(
     {
-      other_metrics: { feature_d: "Feature D" },
+      other_metrics: { "other": { feature_d: "Feature D" } },
       metadata: MOCK_METADATA,
       show_analysis: true,
       daily: [],

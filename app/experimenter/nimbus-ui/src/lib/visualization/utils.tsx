@@ -77,12 +77,13 @@ export const getExtremeBounds = (
   sortedBranches: string[],
   results: AnalysisDataOverall,
   outcomeSlug: string,
+  group: string,
 ) => {
   let extreme = 0;
   sortedBranches.map((branch) => {
     const branchComparison = BRANCH_COMPARISON.UPLIFT;
     const metricDataList =
-      results[branch].branch_data[outcomeSlug][branchComparison]["all"];
+      results[branch].branch_data[group][outcomeSlug][branchComparison]["all"];
     metricDataList.forEach((dataPoint: FormattedAnalysisPoint) => {
       const { lower, upper } = dataPoint;
       const max = Math.max(Math.abs(lower!), Math.abs(upper!));
