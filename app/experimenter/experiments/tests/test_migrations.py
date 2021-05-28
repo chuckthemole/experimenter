@@ -27,7 +27,7 @@ class MigrationTestCase(TransactionTestCase):
         self.executor.loader.build_graph()  # reload.
         self.executor.migrate(self.migrate_to)
 
-
+'''
 @parameterized.parameterized_class(
     ("feature_config_slug",),
     (("no-feature-firefox-desktop",), ("no-feature-fenix",), ("no-feature-ios",)),
@@ -130,3 +130,4 @@ class TestMigration0170(MigrationTestCase):
         # Experiment is restored to original feature
         experiment = NimbusExperiment.objects.get(id=experiment.id)
         self.assertEqual(experiment.feature_config, original_feature)
+    '''
